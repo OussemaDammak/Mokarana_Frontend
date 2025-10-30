@@ -1,5 +1,4 @@
 import AboutSectionOne from "@/components/About/AboutSectionOne";
-import AboutSectionTwo from "@/components/About/AboutSectionTwo";
 import Breadcrumb from "@/components/Common/Breadcrumb";
 
 import { Metadata } from "next";
@@ -14,11 +13,10 @@ const AboutPage = () => {
   return (
     <>
       <Breadcrumb
-        pageName="About Page"
-        description="Lorem ipsum dolor sit amet, consectetur adipiscing elit. In varius eros eget sapien consectetur ultrices. Ut quis dapibus libero."
+        pageName="About us"
+        description="Mokarana is a Tunisian comparison platform, providing comparisons across various laptops. By providing accurate information in an easy-to-visualize way, we aim to simplify decision making."
       />
       <AboutSectionOne />
-      <AboutSectionTwo />
     </>
   );
 };
