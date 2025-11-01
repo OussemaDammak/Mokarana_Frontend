@@ -1,21 +1,33 @@
-
-
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 export interface LoginCredentials {
   username: string;
   password: string;
 }
+
 export interface SignupCredentials {
   username: string;
   email: string;
   password: string;
 }
+
 export interface AuthResponse {
   detail?: string;
   details?: string;
   isAuthenticated?: boolean;
   username?: string;
+  requires_otp?: boolean;
+  user_id?: number;
+  email?: string;
+}
+
+export interface OTPVerifyRequest {
+  user_id: number;
+  otp_code: string;
+}
+
+export interface OTPResendRequest {
+  user_id: number;
 }
 
 // Get CSRF token from cookies
@@ -64,8 +76,7 @@ export async function signup(credentials: SignupCredentials): Promise<AuthRespon
   return data;
 }
 
-
-// Login
+// Login - Now returns OTP requirement
 export async function login(credentials: LoginCredentials): Promise<AuthResponse> {
   // Ensure we have CSRF token
   await fetchCSRFToken();
@@ -86,6 +97,52 @@ export async function login(credentials: LoginCredentials): Promise<AuthResponse
   
   if (!response.ok) {
     throw new Error(data.detail || 'Login failed');
+  }
+  
+  return data;
+}
+
+// Verify OTP
+export async function verifyOTP(request: OTPVerifyRequest): Promise<AuthResponse> {
+  const csrfToken = getCookie('csrftoken');
+  
+  const response = await fetch(`${API_URL}/verify-otp/`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(csrfToken && { 'X-CSRFToken': csrfToken }),
+    },
+    credentials: 'include',
+    body: JSON.stringify(request),
+  });
+
+  const data = await response.json();
+  
+  if (!response.ok) {
+    throw new Error(data.detail || 'OTP verification failed');
+  }
+  
+  return data;
+}
+
+// Resend OTP
+export async function resendOTP(request: OTPResendRequest): Promise<AuthResponse> {
+  const csrfToken = getCookie('csrftoken');
+  
+  const response = await fetch(`${API_URL}/resend-otp/`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(csrfToken && { 'X-CSRFToken': csrfToken }),
+    },
+    credentials: 'include',
+    body: JSON.stringify(request),
+  });
+
+  const data = await response.json();
+  
+  if (!response.ok) {
+    throw new Error(data.detail || 'Failed to resend OTP');
   }
   
   return data;
@@ -131,6 +188,7 @@ export async function whoami(): Promise<AuthResponse> {
   return response.json();
 }
 
+// Google Login - Now returns OTP requirement
 export async function googleLogin(credential: string): Promise<AuthResponse> {
   const response = await fetch(`${API_URL}/auth/google/`, {
     method: 'POST',
