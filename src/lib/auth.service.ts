@@ -130,3 +130,22 @@ export async function whoami(): Promise<AuthResponse> {
 
   return response.json();
 }
+
+export async function googleLogin(credential: string): Promise<AuthResponse> {
+  const response = await fetch(`${API_URL}/auth/google/`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include',
+    body: JSON.stringify({ credential }),
+  });
+  
+  const data = await response.json();
+  
+  if (!response.ok) {
+    throw new Error(data.detail || 'Google login failed');
+  }
+  
+  return data;
+}
