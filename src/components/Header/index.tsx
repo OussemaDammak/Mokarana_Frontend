@@ -1,12 +1,18 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import ThemeToggler from "./ThemeToggler";
 import menuData from "./menuData";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Header = () => {
+  const { user, isAuthenticated, isLoading, logout } = useAuth();
+  const router = useRouter();
+  //debugging
+  console.log("Header state:", { user, isAuthenticated, isLoading });
+
   // Navbar toggle
   const [navbarOpen, setNavbarOpen] = useState(false);
   const navbarToggleHandler = () => {
@@ -37,6 +43,17 @@ const Header = () => {
   };
 
   const usePathName = usePathname();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      router.push("/");
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
+
+
 
   return (
     <>
@@ -159,18 +176,38 @@ const Header = () => {
                 </nav>
               </div>
               <div className="flex items-center justify-end pr-16 lg:pr-0">
-                <Link
-                  href="/signin"
-                  className="text-dark hidden px-7 py-3 text-base font-medium hover:opacity-70 md:block dark:text-white"
-                >
-                  Sign In
-                </Link>
-                <Link
-                  href="/signup"
-                  className="ease-in-up shadow-btn hover:shadow-btn-hover bg-red hover:bg-primary/90 hidden rounded-xs px-8 py-3 text-base font-medium text-white transition duration-300 md:block md:px-9 lg:px-6 xl:px-9"
-                >
-                  Sign Up
-                </Link>
+                {isLoading ? (
+                  <div className="text-dark hidden px-7 py-3 text-base font-medium md:block dark:text-white">
+                    ...
+                  </div>
+                ) : isAuthenticated ? (
+                  <>
+                    <span className="text-dark hidden px-4 py-3 text-base font-medium md:block dark:text-white">
+                      Welcome, {user?.username}
+                    </span>
+                    <button
+                      onClick={handleLogout}
+                      className="ease-in-up shadow-btn hover:shadow-btn-hover bg-red hover:bg-red/90 hidden rounded-xs px-8 py-3 text-base font-medium text-white transition duration-300 md:block md:px-9 lg:px-6 xl:px-9"
+                    >
+                      Logout
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      href="/signin"
+                      className="text-dark hidden px-7 py-3 text-base font-medium hover:opacity-70 md:block dark:text-white"
+                    >
+                      Sign In
+                    </Link>
+                    <Link
+                      href="/signup"
+                      className="ease-in-up shadow-btn hover:shadow-btn-hover bg-red hover:bg-primary/90 hidden rounded-xs px-8 py-3 text-base font-medium text-white transition duration-300 md:block md:px-9 lg:px-6 xl:px-9"
+                    >
+                      Sign Up
+                    </Link>
+                  </>
+                )}
                 <div>
                   <ThemeToggler />
                 </div>

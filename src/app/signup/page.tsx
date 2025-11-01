@@ -1,14 +1,71 @@
+"use client";
+
 import Link from "next/link";
-
-import { Metadata } from "next";
-
-export const metadata: Metadata = {
-  title: "Sign Up",
-  description: "Sign Up to Mokarana",
-  // other metadata
-};
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { signup } from "@/lib/auth.service";
 
 const SignupPage = () => {
+  const router = useRouter();
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+  });
+  const [agreed, setAgreed] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+    // Clear error when user starts typing
+    if (error) setError("");
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+
+    // Validation
+    if (!formData.name || !formData.email || !formData.password) {
+      setError("Please fill in all fields");
+      return;
+    }
+
+    if (!agreed) {
+      setError("Please agree to the Terms and Conditions");
+      return;
+    }
+
+    if (formData.password.length < 8) {
+      setError("Password must be at least 8 characters long");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      await signup({
+        username: formData.name,
+        email: formData.email,
+        password: formData.password,
+      });
+      
+      // Redirect to dashboard or home page after successful signup
+       setTimeout(() => {
+                router.refresh();
+                window.location.href = '/';
+                }, 1000);
+    } catch (err: any) {
+      setError(err.message || "An error occurred during signup");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <>
       <section className="relative z-10 overflow-hidden pt-36 pb-16 md:pb-20 lg:pt-[180px] lg:pb-28">
@@ -20,8 +77,15 @@ const SignupPage = () => {
                   Create your account
                 </h3>
                 <p className="text-body-color mb-11 text-center text-base font-medium">
-                  It’s totally free and super easy
+                  Signup to unlock more features
                 </p>
+
+                {error && (
+                  <div className="mb-6 rounded-sm bg-red-50 border border-red-200 p-4 text-sm text-red-600 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400">
+                    {error}
+                  </div>
+                )}
+
                 <button className="border-stroke dark:text-body-color-dark dark:shadow-two text-body-color hover:border-primary hover:bg-primary/5 hover:text-primary dark:hover:border-primary dark:hover:bg-primary/5 dark:hover:text-primary mb-6 flex w-full items-center justify-center rounded-xs border bg-[#f8f8f8] px-6 py-3 text-base outline-hidden transition-all duration-300 dark:border-transparent dark:bg-[#2C303B] dark:hover:shadow-none">
                   <span className="mr-3">
                     <svg
@@ -73,6 +137,7 @@ const SignupPage = () => {
                   </span>
                   Sign in with Github
                 </button>
+
                 <div className="mb-8 flex items-center justify-center">
                   <span className="bg-body-color/50 hidden h-[1px] w-full max-w-[60px] sm:block"></span>
                   <p className="text-body-color w-full px-5 text-center text-base font-medium">
@@ -80,52 +145,62 @@ const SignupPage = () => {
                   </p>
                   <span className="bg-body-color/50 hidden h-[1px] w-full max-w-[60px] sm:block"></span>
                 </div>
-                <form>
+
+                <form onSubmit={handleSubmit}>
                   <div className="mb-8">
                     <label
                       htmlFor="name"
                       className="text-dark mb-3 block text-sm dark:text-white"
                     >
-                      {" "}
-                      Full Name{" "}
+                      Full Name
                     </label>
                     <input
                       type="text"
                       name="name"
+                      value={formData.name}
+                      onChange={handleChange}
                       placeholder="Enter your full name"
                       className="border-stroke dark:text-body-color-dark dark:shadow-two text-body-color focus:border-primary dark:focus:border-primary w-full rounded-xs border bg-[#f8f8f8] px-6 py-3 text-base outline-hidden transition-all duration-300 dark:border-transparent dark:bg-[#2C303B] dark:focus:shadow-none"
+                      disabled={loading}
                     />
                   </div>
+
                   <div className="mb-8">
                     <label
                       htmlFor="email"
                       className="text-dark mb-3 block text-sm dark:text-white"
                     >
-                      {" "}
-                      Work Email{" "}
+                      Work Email
                     </label>
                     <input
                       type="email"
                       name="email"
+                      value={formData.email}
+                      onChange={handleChange}
                       placeholder="Enter your Email"
                       className="border-stroke dark:text-body-color-dark dark:shadow-two text-body-color focus:border-primary dark:focus:border-primary w-full rounded-xs border bg-[#f8f8f8] px-6 py-3 text-base outline-hidden transition-all duration-300 dark:border-transparent dark:bg-[#2C303B] dark:focus:shadow-none"
+                      disabled={loading}
                     />
                   </div>
+
                   <div className="mb-8">
                     <label
                       htmlFor="password"
                       className="text-dark mb-3 block text-sm dark:text-white"
                     >
-                      {" "}
-                      Your Password{" "}
+                      Your Password
                     </label>
                     <input
                       type="password"
                       name="password"
+                      value={formData.password}
+                      onChange={handleChange}
                       placeholder="Enter your Password"
                       className="border-stroke dark:text-body-color-dark dark:shadow-two text-body-color focus:border-primary dark:focus:border-primary w-full rounded-xs border bg-[#f8f8f8] px-6 py-3 text-base outline-hidden transition-all duration-300 dark:border-transparent dark:bg-[#2C303B] dark:focus:shadow-none"
+                      disabled={loading}
                     />
                   </div>
+
                   <div className="mb-8 flex">
                     <label
                       htmlFor="checkboxLabel"
@@ -135,10 +210,13 @@ const SignupPage = () => {
                         <input
                           type="checkbox"
                           id="checkboxLabel"
+                          checked={agreed}
+                          onChange={(e) => setAgreed(e.target.checked)}
                           className="sr-only"
+                          disabled={loading}
                         />
                         <div className="box border-body-color/20 mt-1 mr-4 flex h-5 w-5 items-center justify-center rounded-sm border dark:border-white/10">
-                          <span className="opacity-0">
+                          <span className={agreed ? "opacity-100" : "opacity-0"}>
                             <svg
                               width="11"
                               height="8"
@@ -170,12 +248,18 @@ const SignupPage = () => {
                       </span>
                     </label>
                   </div>
+
                   <div className="mb-6">
-                    <button className="shadow-submit dark:shadow-submit-dark bg-red hover:bg-primary/90 flex w-full items-center justify-center rounded-xs px-9 py-4 text-base font-medium text-white duration-300">
-                      Sign up
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="shadow-submit dark:shadow-submit-dark bg-red hover:bg-primary/90 flex w-full items-center justify-center rounded-xs px-9 py-4 text-base font-medium text-white duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {loading ? "Signing up..." : "Sign up"}
                     </button>
                   </div>
                 </form>
+
                 <p className="text-body-color text-center text-base font-medium">
                   Already using Startup?{" "}
                   <Link href="/signin" className="text-primary hover:underline">
@@ -186,6 +270,7 @@ const SignupPage = () => {
             </div>
           </div>
         </div>
+
         <div className="absolute top-0 left-0 z-[-1]">
           <svg
             width="1440"

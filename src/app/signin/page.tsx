@@ -1,14 +1,51 @@
+"use client";
+
 import Link from "next/link";
-
-import { Metadata } from "next";
-
-export const metadata: Metadata = {
-  title: "Sign In",
-  description: "Sign in to Mokarana",
-  // other metadata
-};
+import { useState, FormEvent } from "react";
+import { useRouter } from "next/navigation";
+import { login } from "@/lib/auth.service";
 
 const SigninPage = () => {
+  const router = useRouter();
+  const [formData, setFormData] = useState({
+    username: "",
+    password: "",
+    rememberMe: false,
+  });
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError("");
+    setIsLoading(true);
+
+    try {
+      await login({
+        username: formData.username,
+        password: formData.password,
+      });
+      
+      // Redirect to dashboard or home page after successful login
+       setTimeout(() => {
+                router.refresh();
+                window.location.href = '/';
+                }, 1000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Login failed");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  };
+
   return (
     <>
       <section className="relative z-10 overflow-hidden pt-36 pb-16 md:pb-20 lg:pt-[180px] lg:pb-28">
@@ -20,8 +57,10 @@ const SigninPage = () => {
                   Sign in to your account
                 </h3>
                 <p className="text-body-color mb-11 text-center text-base font-medium">
-                  Login to your account for a faster checkout.
+                  Login to your account to unlock more features.
                 </p>
+
+                {/* Social Login Buttons */}
                 <button className="border-stroke dark:text-body-color-dark dark:shadow-two text-body-color hover:border-primary hover:bg-primary/5 hover:text-primary dark:hover:border-primary dark:hover:bg-primary/5 dark:hover:text-primary mb-6 flex w-full items-center justify-center rounded-xs border bg-[#f8f8f8] px-6 py-3 text-base outline-hidden transition-all duration-300 dark:border-transparent dark:bg-[#2C303B] dark:hover:shadow-none">
                   <span className="mr-3">
                     <svg
@@ -73,6 +112,7 @@ const SigninPage = () => {
                   </span>
                   Sign in with Github
                 </button>
+
                 <div className="mb-8 flex items-center justify-center">
                   <span className="bg-body-color/50 hidden h-[1px] w-full max-w-[70px] sm:block"></span>
                   <p className="text-body-color w-full px-5 text-center text-base font-medium">
@@ -80,19 +120,33 @@ const SigninPage = () => {
                   </p>
                   <span className="bg-body-color/50 hidden h-[1px] w-full max-w-[70px] sm:block"></span>
                 </div>
-                <form>
+
+                {/* Error Message */}
+                {error && (
+                  <div className="mb-6 rounded-sm bg-red-50 border border-red-200 p-4 text-sm text-red-600 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400">
+                    {error}
+                  </div>
+                )}
+
+                {/* Login Form */}
+                <form onSubmit={handleSubmit}>
                   <div className="mb-8">
                     <label
-                      htmlFor="email"
+                      htmlFor="username"
                       className="text-dark mb-3 block text-sm dark:text-white"
                     >
-                      Your Email
+                      Username or Email
                     </label>
                     <input
-                      type="email"
-                      name="email"
-                      placeholder="Enter your Email"
-                      className="border-stroke dark:text-body-color-dark dark:shadow-two text-body-color focus:border-primary dark:focus:border-primary w-full rounded-xs border bg-[#f8f8f8] px-6 py-3 text-base outline-hidden transition-all duration-300 dark:border-transparent dark:bg-[#2C303B] dark:focus:shadow-none"
+                      type="text"
+                      name="username"
+                      id="username"
+                      value={formData.username}
+                      onChange={handleChange}
+                      placeholder="Enter your username or email"
+                      required
+                      disabled={isLoading}
+                      className="border-stroke dark:text-body-color-dark dark:shadow-two text-body-color focus:border-primary dark:focus:border-primary w-full rounded-xs border bg-[#f8f8f8] px-6 py-3 text-base outline-hidden transition-all duration-300 dark:border-transparent dark:bg-[#2C303B] dark:focus:shadow-none disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                   </div>
                   <div className="mb-8">
@@ -105,24 +159,33 @@ const SigninPage = () => {
                     <input
                       type="password"
                       name="password"
+                      id="password"
+                      value={formData.password}
+                      onChange={handleChange}
                       placeholder="Enter your Password"
-                      className="border-stroke dark:text-body-color-dark dark:shadow-two text-body-color focus:border-primary dark:focus:border-primary w-full rounded-xs border bg-[#f8f8f8] px-6 py-3 text-base outline-hidden transition-all duration-300 dark:border-transparent dark:bg-[#2C303B] dark:focus:shadow-none"
+                      required
+                      disabled={isLoading}
+                      className="border-stroke dark:text-body-color-dark dark:shadow-two text-body-color focus:border-primary dark:focus:border-primary w-full rounded-xs border bg-[#f8f8f8] px-6 py-3 text-base outline-hidden transition-all duration-300 dark:border-transparent dark:bg-[#2C303B] dark:focus:shadow-none disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                   </div>
                   <div className="mb-8 flex flex-col justify-between sm:flex-row sm:items-center">
                     <div className="mb-4 sm:mb-0">
                       <label
-                        htmlFor="checkboxLabel"
+                        htmlFor="rememberMe"
                         className="text-body-color flex cursor-pointer items-center text-sm font-medium select-none"
                       >
                         <div className="relative">
                           <input
                             type="checkbox"
-                            id="checkboxLabel"
+                            name="rememberMe"
+                            id="rememberMe"
+                            checked={formData.rememberMe}
+                            onChange={handleChange}
+                            disabled={isLoading}
                             className="sr-only"
                           />
                           <div className="box border-body-color/20 mr-4 flex h-5 w-5 items-center justify-center rounded-sm border dark:border-white/10">
-                            <span className="opacity-0">
+                            <span className={formData.rememberMe ? "opacity-100" : "opacity-0"}>
                               <svg
                                 width="11"
                                 height="8"
@@ -153,13 +216,18 @@ const SigninPage = () => {
                     </div>
                   </div>
                   <div className="mb-6">
-                    <button className="shadow-submit dark:shadow-submit-dark bg-primary hover:bg-primary/90 flex w-full items-center justify-center rounded-xs px-9 py-4 text-base font-medium text-white duration-300">
-                      Sign in
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className="shadow-submit dark:shadow-submit-dark bg-primary hover:bg-primary/90 flex w-full items-center justify-center rounded-xs px-9 py-4 text-base font-medium text-white duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isLoading ? "Signing in..." : "Sign in"}
                     </button>
                   </div>
                 </form>
+
                 <p className="text-body-color text-center text-base font-medium">
-                  Don’t you have an account?{" "}
+                  Don't you have an account?{" "}
                   <Link href="/signup" className="text-red hover:underline">
                     Sign up
                   </Link>
